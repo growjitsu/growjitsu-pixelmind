@@ -1,0 +1,7 @@
+{
+  "name": "PixelMind - Crie, Melhore, Anime",
+  "description": "Uma landing page de alta conversão para PixelMind, uma ferramenta de IA para criação, melhoria e animação de imagens.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

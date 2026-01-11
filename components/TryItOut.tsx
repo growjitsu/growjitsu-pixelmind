@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Send, Loader2, Image as ImageIcon, Lock, ShoppingCart } from 'lucide-react';
@@ -27,7 +26,6 @@ const TryItOut: React.FC = () => {
             setIsLimitReached(true);
           }
         } else {
-          // Reset para um novo dia
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ count: 0, date: today }));
           setUsageCount(0);
           setIsLimitReached(false);
@@ -48,13 +46,13 @@ const TryItOut: React.FC = () => {
     setDescription(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // Criação da instância seguindo estritamente as diretrizes de segurança
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      // Usando o modelo de imagem conforme as diretrizes
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
-          parts: [{ text: `Crie uma imagem profissional e artística baseada neste prompt: ${prompt}. Estilo épico, alta definição.` }]
+          parts: [{ text: `Crie uma imagem profissional e artística baseada neste prompt: ${prompt}. Estilo épico, fotorrealista, 8k.` }]
         },
         config: {
           imageConfig: {
@@ -64,21 +62,22 @@ const TryItOut: React.FC = () => {
       });
 
       let foundImage = false;
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          const base64Data = part.inlineData.data;
-          setImageUrl(`data:image/png;base64,${base64Data}`);
-          foundImage = true;
-        } else if (part.text) {
-          setDescription(part.text);
+      if (response.candidates?.[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData) {
+            const base64Data = part.inlineData.data;
+            setImageUrl(`data:image/png;base64,${base64Data}`);
+            foundImage = true;
+          } else if (part.text) {
+            setDescription(part.text);
+          }
         }
       }
 
-      if (!foundImage) {
-        setDescription("A IA processou seu pedido, mas a geração visual está disponível apenas na versão completa.");
+      if (!foundImage && !description) {
+        setDescription("A IA processou o pedido, mas a geração visual está disponível apenas na versão Pro.");
       }
 
-      // Atualiza contador
       const newCount = usageCount + 1;
       const today = new Date().toISOString().split('T')[0];
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ count: newCount, date: today }));
@@ -89,8 +88,8 @@ const TryItOut: React.FC = () => {
       }
 
     } catch (error) {
-      console.error(error);
-      setDescription('Erro ao conectar com a rede neural. Tente novamente.');
+      console.error("API Error:", error);
+      setDescription('Não foi possível conectar aos servidores neurais agora. O plano Pro garante acesso estável.');
     } finally {
       setIsLoading(false);
     }
@@ -109,14 +108,14 @@ const TryItOut: React.FC = () => {
               </div>
               <h3 className="text-2xl md:text-3xl font-bold mb-4">Limite de Teste Atingido</h3>
               <p className="text-gray-400 mb-8 max-w-md">
-                Você já utilizou suas 2 gerações gratuitas de hoje. Para continuar criando imagens e vídeos ilimitados, assine o plano Pro Mind.
+                Você já utilizou suas 2 gerações gratuitas de hoje. Para continuar criando ilimitadamente, assine o plano Pro Mind.
               </p>
               <a 
                 href={paymentLink}
                 className="px-10 py-5 rounded-2xl gradient-bg font-black text-xl flex items-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-purple-500/40 text-white"
               >
                 <ShoppingCart className="w-6 h-6" />
-                LIBERAR ACESSO ILIMITADO AGORA
+                LIBERAR ACESSO PRO AGORA
               </a>
             </div>
           )}
@@ -124,7 +123,7 @@ const TryItOut: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <p className="text-gray-400 font-medium">O que você gostaria de criar agora?</p>
             <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-purple-400">
-              {2 - usageCount} GERAÇÕES RESTANTES
+              {Math.max(0, 2 - usageCount)} GERAÇÕES RESTANTES
             </div>
           </div>
 
@@ -167,7 +166,7 @@ const TryItOut: React.FC = () => {
                 
                 <div className="flex-1">
                   <p className="text-gray-200 leading-relaxed italic text-lg mb-4">
-                    {description || "Sua imagem foi processada com sucesso pelos nossos servidores neurais de alta performance."}
+                    {description || "Sua imagem foi processada com sucesso pelos nossos servidores neurais."}
                   </p>
                   <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
                     <p className="text-xs text-purple-300 font-bold uppercase tracking-widest mb-1">Dica Pro</p>
@@ -180,7 +179,7 @@ const TryItOut: React.FC = () => {
         </div>
         
         <p className="mt-6 text-gray-500 text-sm italic">
-          * A demonstração gratuita utiliza uma versão simplificada do nosso motor. O plano completo oferece resultados 10x superiores.
+          * A demonstração gratuita utiliza uma versão simplificada do nosso motor neural.
         </p>
       </div>
     </section>
